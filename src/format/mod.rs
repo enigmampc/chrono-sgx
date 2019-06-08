@@ -16,10 +16,11 @@
 //! C's `strftime` format](./strftime/index.html).
 
 #![allow(ellipsis_inclusive_range_patterns)]
-
 use core::borrow::Borrow;
 use core::fmt;
 use core::str::FromStr;
+#[cfg(any(feature = "std", test))]
+use std::prelude::v1::*;
 #[cfg(any(feature = "std", test))]
 use std::error::Error;
 #[cfg(feature = "alloc")]
@@ -319,6 +320,7 @@ enum ParseErrorKind {
 /// Same as `Result<T, ParseError>`.
 pub type ParseResult<T> = Result<T, ParseError>;
 
+#[allow(deprecated)]
 impl fmt::Display for ParseError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match self.0 {

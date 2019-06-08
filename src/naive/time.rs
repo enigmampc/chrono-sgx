@@ -1315,6 +1315,7 @@ impl str::FromStr for NaiveTime {
 
         let mut parsed = Parsed::new();
         parse(&mut parsed, s, ITEMS.iter())?;
+        //parse(&mut parsed, s, ITEMS.iter().cloned())?;
         parsed.to_naive_time()
     }
 }

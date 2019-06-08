@@ -301,7 +301,7 @@ impl Parsed {
                 // check if present quotient and/or modulo is consistent to the full year.
                 // since the presence of those fields means a positive full year,
                 // we should filter a negative full year first.
-                (Some(y), q, r @ Some(0...99)) | (Some(y), q, r @ None) => {
+                (Some(y), q, r @ Some(0..=99)) | (Some(y), q, r @ None) => {
                     if y < 0 { return Err(OUT_OF_RANGE); }
                     let (q_, r_) = div_rem(y, 100);
                     if q.unwrap_or(q_) == q_ && r.unwrap_or(r_) == r_ {
@@ -313,7 +313,7 @@ impl Parsed {
 
                 // the full year is missing but we have quotient and modulo.
                 // reconstruct the full year. make sure that the result is always positive.
-                (None, Some(q), Some(r @ 0...99)) => {
+                (None, Some(q), Some(r @ 0..=99)) => {
                     if q < 0 { return Err(OUT_OF_RANGE); }
                     let y = q.checked_mul(100).and_then(|v| v.checked_add(r));
                     Ok(Some(y.ok_or(OUT_OF_RANGE)?))
@@ -321,7 +321,7 @@ impl Parsed {
 
                 // we only have modulo. try to interpret a modulo as a conventional two-digit year.
                 // note: we are affected by Rust issue #18060. avoid multiple range patterns.
-                (None, None, Some(r @ 0...99)) => Ok(Some(r + if r < 70 {2000} else {1900})),
+                (None, None, Some(r @ 0..=99)) => Ok(Some(r + if r < 70 {2000} else {1900})),
 
                 // otherwise it is an out-of-bound or insufficient condition.
                 (None, Some(_), None) => Err(NOT_ENOUGH),
@@ -345,11 +345,11 @@ impl Parsed {
             };
             let month = date.month();
             let day = date.day();
-            (self.year.unwrap_or(year) == year &&
+            self.year.unwrap_or(year) == year &&
              self.year_div_100.or(year_div_100) == year_div_100 &&
              self.year_mod_100.or(year_mod_100) == year_mod_100 &&
              self.month.unwrap_or(month) == month &&
-             self.day.unwrap_or(day) == day)
+             self.day.unwrap_or(day) == day
         };
 
         // verify the ISO week date.
@@ -364,11 +364,11 @@ impl Parsed {
             } else {
                 (None, None) // they should be empty to be consistent
             };
-            (self.isoyear.unwrap_or(isoyear) == isoyear &&
+            self.isoyear.unwrap_or(isoyear) == isoyear &&
              self.isoyear_div_100.or(isoyear_div_100) == isoyear_div_100 &&
              self.isoyear_mod_100.or(isoyear_mod_100) == isoyear_mod_100 &&
              self.isoweek.unwrap_or(isoweek) == isoweek &&
-             self.weekday.unwrap_or(weekday) == weekday)
+             self.weekday.unwrap_or(weekday) == weekday
         };
 
         // verify the ordinal and other (non-ISO) week dates.
@@ -377,9 +377,9 @@ impl Parsed {
             let weekday = date.weekday();
             let week_from_sun = (ordinal as i32 - weekday.num_days_from_sunday() as i32 + 7) / 7;
             let week_from_mon = (ordinal as i32 - weekday.num_days_from_monday() as i32 + 7) / 7;
-            (self.ordinal.unwrap_or(ordinal) == ordinal &&
+            self.ordinal.unwrap_or(ordinal) == ordinal &&
              self.week_from_sun.map_or(week_from_sun, |v| v as i32) == week_from_sun &&
-             self.week_from_mon.map_or(week_from_mon, |v| v as i32) == week_from_mon)
+             self.week_from_mon.map_or(week_from_mon, |v| v as i32) == week_from_mon
         };
 
         // test several possibilities.
@@ -476,32 +476,32 @@ impl Parsed {
     /// It is able to handle leap seconds when given second is 60.
     pub fn to_naive_time(&self) -> ParseResult<NaiveTime> {
         let hour_div_12 = match self.hour_div_12 {
-            Some(v @ 0...1) => v,
+            Some(v @ 0..=1) => v,
             Some(_) => return Err(OUT_OF_RANGE),
             None => return Err(NOT_ENOUGH),
         };
         let hour_mod_12 = match self.hour_mod_12 {
-            Some(v @ 0...11) => v,
+            Some(v @ 0..=11) => v,
             Some(_) => return Err(OUT_OF_RANGE),
             None => return Err(NOT_ENOUGH),
         };
         let hour = hour_div_12 * 12 + hour_mod_12;
 
         let minute = match self.minute {
-            Some(v @ 0...59) => v,
+            Some(v @ 0..=59) => v,
             Some(_) => return Err(OUT_OF_RANGE),
             None => return Err(NOT_ENOUGH),
         };
 
         // we allow omitting seconds or nanoseconds, but they should be in the range.
         let (second, mut nano) = match self.second.unwrap_or(0) {
-            v @ 0...59 => (v, 0),
+            v @ 0..=59 => (v, 0),
             60 => (59, 1_000_000_000),
             _ => return Err(OUT_OF_RANGE),
         };
         nano += match self.nanosecond {
-            Some(v @ 0...999_999_999) if self.second.is_some() => v,
-            Some(0...999_999_999) => return Err(NOT_ENOUGH), // second is missing
+            Some(v @ 0..=999_999_999) if self.second.is_some() => v,
+            Some(0..=999_999_999) => return Err(NOT_ENOUGH), // second is missing
             Some(_) => return Err(OUT_OF_RANGE),
             None => 0,
         };
@@ -564,7 +564,7 @@ impl Parsed {
                     // otherwise it is impossible.
                     _ => return Err(IMPOSSIBLE)
                 }
-                // ...and we have the correct candidates for other fields.
+                // ..=and we have the correct candidates for other fields.
             } else {
                 parsed.set_second(i64::from(datetime.second()))?;
             }

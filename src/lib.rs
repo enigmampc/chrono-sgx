@@ -390,6 +390,8 @@
 
 #![cfg_attr(not(any(feature = "std", test)), no_std)]
 
+#![cfg_attr(all(feature = "mesalock_sgx", not(target_env = "sgx")), no_std)]
+#![cfg_attr(all(target_env = "sgx", target_vendor = "mesalock"), feature(rustc_private))]
 // The explicit 'static lifetimes are still needed for rustc 1.13-16
 // backward compatibility, and this appeases clippy. If minimum rustc
 // becomes 1.17, should be able to remove this, those 'static lifetimes,
@@ -408,10 +410,16 @@
 
 #[cfg(feature = "alloc")]
 extern crate alloc;
-#[cfg(any(feature = "std", test))]
+#[cfg(all(feature = "std", target_env = "sgx"))]
 extern crate std as core;
-#[cfg(all(feature = "std", not(feature="alloc")))]
+#[cfg(all(feature = "std", target_env = "sgx", not(feature="alloc")))]
 extern crate std as alloc;
+#[cfg(all(feature = "std", not(target_env = "sgx"), not(feature="alloc")))]
+extern crate sgx_tstd as alloc;
+
+#[cfg(all(feature = "mesalock_sgx", not(target_env = "sgx")))]
+#[macro_use]
+extern crate sgx_tstd as std;
 
 #[cfg(feature="clock")]
 extern crate time as oldtime;

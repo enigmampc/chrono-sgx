@@ -1490,6 +1490,7 @@ impl str::FromStr for NaiveDateTime {
 
         let mut parsed = Parsed::new();
         parse(&mut parsed, s, ITEMS.iter())?;
+        //parse(&mut parsed, s, ITEMS.iter().cloned())?;
         parsed.to_naive_datetime_with_offset(0)
     }
 }

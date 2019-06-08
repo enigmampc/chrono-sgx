@@ -7,6 +7,8 @@ use core::{str, fmt, hash};
 use core::cmp::Ordering;
 use core::ops::{Add, Sub};
 #[cfg(any(feature = "std", test))]
+use std::prelude::v1::*;
+#[cfg(any(feature = "std", test))]
 use std::time::{SystemTime, UNIX_EPOCH};
 use oldtime::Duration as OldDuration;
 
